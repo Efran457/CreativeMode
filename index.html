@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Pixel-Editor - Farben & Vorschau</title>
+<style>
+body { display:flex; flex-direction:column; align-items:center; font-family:Arial; margin:0; padding:20px; background:#f0f0f0; }
+#pixelCanvas { display:grid; grid-template-columns:repeat(16,30px); grid-template-rows:repeat(16,30px); gap:1px; margin-bottom:10px; }
+.pixel { width:30px; height:30px; background:white; border:1px solid #ccc; cursor:pointer; }
+#controls { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+button, input, select { padding:8px; margin:2px; cursor:pointer; }
+#savedDrawings { margin-top:10px; display:flex; flex-wrap:wrap; gap:5px; }
+.savedBtn { display:flex; flex-direction:column; align-items:center; border:1px solid #ccc; padding:5px; background:#fff; }
+#output { margin-top:20px; width:500px; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:10px; font-family:monospace; }
+.colorPicker { width:30px; height:30px; border:1px solid #ccc; cursor:pointer; }
+.previewCanvas { width:80px; height:80px; image-rendering:pixelated; border:1px solid #ccc; margin-bottom:5px; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <button id="clearBtn">Löschen</button>
+  <input type="text" id="saveName" placeholder="Name eingeben">
+  <button id="saveBtn">Online speichern</button>
+  <label>Farbe wählen: <input type="color" id="colorPicker" class="colorPicker" value="#000000"></label>
+</div>
+
+<div id="pixelCanvas"></div>
+<div id="savedDrawings"></div>
+<div id="output">Hier erscheint die Farb-Liste.</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+// Firebase-Konfiguration
+const firebaseConfig = {
+  apiKey: "AIzaSyC1ZYypZ4-fms45zqA_UutYFmbXQ4q3psI",
+  authDomain: "imran-id123.firebaseapp.com",
+  databaseURL: "https://imran-id123-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "imran-id123",
+  storageBucket: "imran-id123.firebasestorage.app",
+  messagingSenderId: "397729453639",
+  appId: "1:397729453639:web:c1e77be6ca3288418d4362",
+  measurementId: "G-EREE36DJSL"
+};
+
+// Firebase initialisieren
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Canvas Setup
+const canvas = document.getElementById('pixelCanvas');
+const clearBtn = document.getElementById('clearBtn');
+const saveBtn = document.getElementById('saveBtn');
+const saveNameInput = document.getElementById('saveName');
+const savedDrawingsDiv = document.getElementById('savedDrawings');
+const output = document.getElementById('output');
+const colorPicker = document.getElementById('colorPicker');
+const gridSize = 16;
+
+// Raster erstellen
+for(let i=0;i<gridSize*gridSize;i++){
+  const pixel = document.createElement('div');
+  pixel.classList.add('pixel');
+  canvas.appendChild(pixel);
+}
+
+let isDrawing=false;
+canvas.addEventListener('mousedown', ()=>isDrawing=true);
+canvas.addEventListener('mouseup', ()=>isDrawing=false);
+canvas.addEventListener('mousemove', e => { 
+  if(isDrawing && e.target.classList.contains('pixel')) e.target.style.backgroundColor=colorPicker.value; 
+});
+canvas.addEventListener('click', e => { 
+  if(e.target.classList.contains('pixel')) e.target.style.backgroundColor=colorPicker.value; 
+});
+
+// Canvas löschen
+clearBtn.addEventListener('click', ()=>{
+  document.querySelectorAll('.pixel').forEach(p=>p.style.backgroundColor='white');
+  output.textContent='Hier erscheint die Farb-Liste.';
+});
+
+// Canvas in Farb-Array umwandeln
+function getPixelArray(){
+  const pixels=document.querySelectorAll('.pixel');
+  const array=[];
+  for(let y=0;y<gridSize;y++){
+    const row=[];
+    for(let x=0;x<gridSize;x++){
+      const index=y*gridSize+x;
+      row.push(pixels[index].style.backgroundColor || '#ffffff');
+    }
+    array.push(row);
+  }
+  return array;
+}
+
+// Gespeicherte Zeichnungen anzeigen mit Vorschau
+async function refreshSavedDrawings(){
+  savedDrawingsDiv.innerHTML='';
+  const snapshot = await get(ref(db,'pixelZeichnungen'));
+  if(snapshot.exists()){
+    const data = snapshot.val();
+    Object.keys(data).forEach(name=>{
+      const btnContainer = document.createElement('div');
+      btnContainer.classList.add('savedBtn');
+
+      const previewCanvas = document.createElement('canvas');
+      previewCanvas.classList.add('previewCanvas');
+      previewCanvas.width = gridSize;
+      previewCanvas.height = gridSize;
+      const ctx = previewCanvas.getContext('2d');
+
+      const array = data[name];
+      for(let y=0;y<gridSize;y++){
+        for(let x=0;x<gridSize;x++){
+          ctx.fillStyle = array[y][x];
+          ctx.fillRect(x,y,1,1);
+        }
+      }
+
+      const loadBtn = document.createElement('button');
+      loadBtn.textContent='Laden';
+      loadBtn.onclick = ()=>{
+        const pixels=document.querySelectorAll('.pixel');
+        for(let y=0;y<gridSize;y++){
+          for(let x=0;x<gridSize;x++){
+            const index = y*gridSize+x;
+            pixels[index].style.backgroundColor=array[y][x];
+          }
+        }
+        output.textContent=JSON.stringify(array,null,2);
+      };
+
+      const label = document.createElement('div');
+      label.textContent=name;
+
+      btnContainer.appendChild(previewCanvas);
+      btnContainer.appendChild(label);
+      btnContainer.appendChild(loadBtn);
+      savedDrawingsDiv.appendChild(btnContainer);
+    });
+  }
+}
+
+// Online speichern
+saveBtn.addEventListener('click', async ()=>{
+  const name = saveNameInput.value.trim();
+  if(!name){ alert('Bitte Name eingeben!'); return; }
+  const array = getPixelArray();
+  await set(ref(db,'pixelZeichnungen/'+name),array);
+  output.textContent=`"${name}" online gespeichert!`;
+  saveNameInput.value='';
+  refreshSavedDrawings();
+});
+
+// Initial laden
+refreshSavedDrawings();
+</script>
+
+</body>
+</html>
