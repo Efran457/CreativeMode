@@ -4,16 +4,127 @@
 <meta charset="UTF-8">
 <title>Pixel-Editor - Farben & Vorschau</title>
 <style>
-body { display:flex; flex-direction:column; align-items:center; font-family:Arial; margin:0; padding:20px; background:#f0f0f0; }
-#pixelCanvas { display:grid; grid-template-columns:repeat(16,30px); grid-template-rows:repeat(16,30px); gap:1px; margin-bottom:10px; }
-.pixel { width:30px; height:30px; background:white; border:1px solid #ccc; cursor:pointer; }
-#controls { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
-button, input, select { padding:8px; margin:2px; cursor:pointer; }
-#savedDrawings { margin-top:10px; display:flex; flex-wrap:wrap; gap:5px; }
-.savedBtn { display:flex; flex-direction:column; align-items:center; border:1px solid #ccc; padding:5px; background:#fff; }
-#output { margin-top:20px; width:500px; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:10px; font-family:monospace; }
-.colorPicker { width:30px; height:30px; border:1px solid #ccc; cursor:pointer; }
-.previewCanvas { width:80px; height:80px; image-rendering:pixelated; border:1px solid #ccc; margin-bottom:5px; }
+body {
+  background-color: #32C5FF;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+p {
+  background-color: #2599C7;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+}
+
+#pixelCanvas {
+  display:grid;
+  grid-template-columns:repeat(16,30px);
+  grid-template-rows:repeat(16,30px);
+  gap:1px;
+  margin-bottom:10px;
+  border: 2px solid #017FB0;
+  border-radius: 8px;
+  background:white;
+}
+
+.pixel {
+  width:30px;
+  height:30px;
+  background:white;
+  cursor:pointer;
+}
+
+#controls {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:10px;
+  align-items:center;
+}
+
+input {
+  font-size: 18px;
+  padding: 5px;
+  border-radius: 8px;
+  border: 2px solid #017FB0;
+}
+
+button {
+  background-color: #2599C7;
+  color: white;
+  font-size: 18px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1E7CA0;
+}
+
+#savedDrawings {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+}
+
+.savedBtn {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  border: 2px solid #017FB0;
+  border-radius: 8px;
+  padding:5px;
+  background:#2599C7;
+  color:white;
+}
+
+.savedBtn button {
+  margin-top:5px;
+  background-color:white;
+  color:#2599C7;
+  border-radius: 5px;
+  padding:5px 10px;
+}
+
+.savedBtn button:hover {
+  background-color:#e0e0e0;
+}
+
+.previewCanvas {
+  width:80px;
+  height:80px;
+  image-rendering:pixelated;
+  border:1px solid #017FB0;
+  margin-bottom:5px;
+}
+
+#output {
+  margin-top:20px;
+  width:500px;
+  word-wrap:break-word;
+  background:#2599C7;
+  border:2px solid #017FB0;
+  border-radius:8px;
+  padding:10px;
+  font-family:monospace;
+  color:white;
+}
+.colorPicker {
+  width:30px;
+  height:30px;
+  border:2px solid #017FB0;
+  cursor:pointer;
+  border-radius:5px;
+}
 </style>
 </head>
 <body>
@@ -45,7 +156,6 @@ const firebaseConfig = {
   measurementId: "G-EREE36DJSL"
 };
 
-// Firebase initialisieren
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
